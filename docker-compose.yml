@@ -1,0 +1,23 @@
+services:
+  user-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: user_db
+    ports:
+      - "5432:5432"
+
+  product_db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: product_db
+    ports:
+      - "5433:5432"
+
+  cart-redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

@@ -3,7 +3,6 @@ package user
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -24,7 +23,6 @@ func (s *Service) Register(email, password string) (*User, error) {
 	}
 	_, err := s.repo.GetByEmail(email)
 
-	fmt.Println(err)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, errors.New("error validating the user email")
 	}
@@ -46,4 +44,18 @@ func (s *Service) Register(email, password string) (*User, error) {
 	}
 
 	return u, s.repo.Create(u)
+}
+
+func (s *Service) CheckUserExists(userId int) error {
+	if userId <= 0 {
+		return errors.New("Invalid ID")
+	}
+
+	_, err := s.repo.GetById(userId)
+
+	if err == sql.ErrNoRows {
+		return errors.New("User does not exist")
+	}
+
+	return nil
 }

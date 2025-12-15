@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"strconv"
 
 	"github.com/luis-o-l-souza/go-microservice-e-commerce/internal/user"
 )
@@ -28,6 +29,20 @@ func (r *PostgresRepository) GetByEmail(email string) (*user.User, error) {
 	query := `SELECT id, email, password, created_at FROM users where email = $1`
 
 	err := r.DB.QueryRow(query, email).Scan(&u.ID, &u.Email, &u.Password, &u.CreatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
+func (r *PostgresRepository) GetById(userId int) (*user.User, error) {
+	u := &user.User{}
+
+	query := `SELECT id FROM users WHERE id = $1`
+
+	err := r.DB.QueryRow(query, strconv.Itoa(userId)).Scan(&u.ID)
 
 	if err != nil {
 		return nil, err

@@ -15,6 +15,7 @@ type Handler struct {
 type AddToCartRequest struct {
 	ProductId int `json:"product_id"`
 	Amount int `json:"amount"`
+	UserId int `json:"user_id"`
 }
 
 func NewHandler(service *Service) *Handler {
@@ -36,12 +37,12 @@ func (h *Handler) addToCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if body.ProductId <= 0 || body.Amount <= 0 {
+	if body.ProductId <= 0 || body.Amount <= 0 || body.UserId <= 0 {
 		http.Error(w, fmt.Sprintf("Invalid payload: %+v", body), http.StatusBadRequest)
 		return
 	}
 
-	_, stock, err := h.service.g.CheckProductExists(r.Context(), body.ProductId)
+	price, stock, err := h.service.g.CheckProductExists(r.Context(), body.ProductId)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -50,6 +51,20 @@ func (h *Handler) addToCart(w http.ResponseWriter, r *http.Request) {
 
 	if stock < body.Amount {
 		http.Error(w, "Theres not enough stock for the product.", http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.u.CheckUserExists(r.Context(), body.UserId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.AddToCart(&body, price)
+
+	if err != nil {
+		http.Error(w, "Error when saving the cart", http.StatusInternalServerError)
 		return
 	}
 

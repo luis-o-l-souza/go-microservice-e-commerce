@@ -1,8 +1,11 @@
 package product
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -24,6 +27,7 @@ func NewHandler(service *Service) *Handler {
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/create", h.createProduct)
 	r.Get("/", h.getProducts)
+	r.Get("/{id}", h.getProductById)
 	r.Get("/name", h.getProductsByName)
 }
 
@@ -84,4 +88,26 @@ func (h *Handler) getProductsByName(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(products)
+}
+
+func (h *Handler) getProductById(w http.ResponseWriter, r *http.Request) {
+	_id := chi.URLParam(r, "id")
+ 	id, err := strconv.Atoi(_id)
+	if id <= 0 {
+		http.Error(w, "Invalid id", http.StatusBadRequest)
+		return
+	}
+
+	product, err := h.service.repo.GetById(id)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, fmt.Sprintf("No product found with id: %d", id), http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(product)
 }
